@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VR Minecraft - WebXR Edition</title>
+    <!-- A-Frame VR Framework -->
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: sans-serif; }
+        #vr-notice {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            z-index: 999;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="vr-notice">
+        <b>VR Minecraft</b><br>
+        • Desktop: Click & Drag to Look | WASD to Walk | Click Menu Buttons<br>
+        • VR Headset: Point controller laser & trigger to select / break / place blocks
+    </div>
+
+    <a-scene id="main-scene" background="color: #87CEEB">
+        
+        <!-- Assets & Textures -->
+        <a-assets>
+            <a-mixin id="block-geo" geometry="primitive: box; width: 1; height: 1; depth: 1"></a-mixin>
+        </a-assets>
+
+        <!-- Player Rigid Body & VR Rig -->
+        <a-entity id="rig" position="0 1.6 0">
+            <!-- Camera / VR Headset Head -->
+            <a-camera id="camera" look-controls="pointerLockEnabled: false">
+                <!-- Cursor for Desktop / Non-6DOF fallback -->
+                <a-cursor id="cursor" raycaster="objects: .clickable, .voxel" color="#FFFFFF"></a-cursor>
+            </a-camera>
+
+            <!-- Right VR Controller (Laser pointer for UI & Mining) -->
+            <a-entity id="right-hand" laser-controls="hand: right" raycaster="objects: .clickable, .voxel; far: 8"></a-entity>
+            <!-- Left VR Controller -->
+            <a-entity id="left-hand" laser-controls="hand: left"></a-entity>
+        </a-entity>
+
+        <!-- Ambient Lighting -->
+        <a-light type="ambient" color="#FFF" intensity="0.6"></a-light>
+        <a-light type="directional" color="#FFF" intensity="0.6" position="-1 2 1"></a-light>
+
+        <!-- ======================================================= -->
+        <!--                   VR TITLE & MOD MENU                   -->
+        <!-- ======================================================= -->
+        <a-entity id="menu-ui" position="0 2 -3">
+            <!-- Main Title Panel -->
+            <a-plane width="3.2" height="2.8" color="#1e1e1e" opacity="0.9" position="0 0 0">
+                <a-text value="MINECRAFT VR" align="center" position="0 1.1 0.01" scale="1.5 1.5 1.5" color="#55FF55"></a-text>
+                <a-text id="current-mode-label" value="Current Mode: Creative" align="center" position="0 0.8 0.01" scale="0.6 0.6 0.6" color="#FFFF55"></a-text>
+
+                <!-- Game Mode Buttons -->
+                <a-entity position="0 0.3 0.01">
+                    <a-plane class="clickable" onclick="setGameMode('creative')" width="0.9" height="0.3" color="#333" position="-1 0 0">
+                        <a-text value="Creative" align="center" position="0 0 0.01" scale="0.5 0.5 0.5"></a-text>
+                    </a-plane>
+                    <a-plane class="clickable" onclick="setGameMode('survival')" width="0.9" height="0.3" color="#333" position="0 0 0">
+                        <a-text value="Survival" align="center" position="0 0 0.01" scale="0.5 0.5 0.5"></a-text>
+                    </a-plane>
+                    <a-plane class="clickable" onclick="setGameMode('spectator')" width="0.9" height="0.3" color="#333" position="1 0 0">
+                        <a-text value="Spectator" align="center" position="0 0 0.01" scale="0.5 0.5 0.5"></a-text>
+                    </a-plane>
+                </a-entity>
+
+                <!-- Mod / Addon Manager Section -->
+                <a-text value="--- MODS & GAME MODIFIERS ---" align="center" position="0 -0.1 0.01" scale="0.5 0.5 0.5" color="#AAAAAA"></a-text>
+                
+                <a-entity position="0 -0.5 0.01">
+                    <a-plane id="mod-speed-btn" class="clickable" onclick="toggleMod('speed')" width="2.8" height="0.25" color="#444" position="0 0.15 0">
+                        <a-text id="mod-speed-text" value="[OFF] Speed Mod: Super Movement Speed" align="center" position="0 0 0.01" scale="0.4 0.4 0.4"></a-text>
+                    </a-plane>
+
+                    <a-plane id="mod-night-btn" class="clickable" onclick="toggleMod('night')" width="2.8" height="0.25" color="#444" position="0 -0.15 0">
+                        <a-text id="mod-night-text" value="[OFF] World Mod: Always Night / Spooky Sky" align="center" position="0 0 0.01" scale="0.4 0.4 0.4"></a-text>
+                    </a-plane>
+                </a-entity>
+
+                <!-- Start World Button -->
+                <a-plane class="clickable" onclick="startGame()" width="2.8" height="0.4" color="#2e7d32" position="0 -1.0 0.01">
+                    <a-text value="START WORLD / ENTER VR" align="center" position="0 0 0.01" scale="0.8 0.8 0.8" color="#FFFFFF"></a-text>
+                </a-plane>
+            </a-plane>
+        </a-entity>
+
+        <!-- World Block Container -->
+        <a-entity id="world"></a-entity>
+
+    </a-scene>
+
+    <script>
+        // --- Game State & Variables ---
+        let currentMode = 'creative';
+        let activeMods = {
+            speed: false,
+            night: false
+        };
+
+        const scene = document.querySelector('a-scene');
+        const world = document.getElementById('world');
+        const rig = document.getElementById('rig');
+        const menuUI = document.getElementById('menu-ui');
+
+        // Block Materials / Colors
+        const blockColors = {
+            grass: "#55a042",
+            dirt: "#8b5a2b",
+            stone: "#808080"
+        };
+
+        // --- Game Mode Switcher ---
+        function setGameMode(mode) {
+            currentMode = mode;
+            document.getElementById('current-mode-label').setAttribute('value', 'Current Mode: ' + mode.toUpperCase());
+
+            if (mode === 'spectator') {
+                rig.setAttribute('wasd-controls', 'fly: true; acceleration: 40');
+            } else {
+                rig.setAttribute('wasd-controls', 'fly: false; acceleration: 20');
+            }
+        }
+
+        // --- Mod / Addon Toggle Logic ---
+        function toggleMod(modKey) {
+            activeMods[modKey] = !activeMods[modKey];
+
+            if (modKey === 'speed') {
+                const btnText = document.getElementById('mod-speed-text');
+                btnText.setAttribute('value', (activeMods.speed ? '[ON] ' : '[OFF] ') + 'Speed Mod: Super Movement Speed');
+                
+                if (activeMods.speed) {
+                    rig.setAttribute('wasd-controls', 'acceleration: 80');
+                } else {
+                    rig.setAttribute('wasd-controls', 'acceleration: 20');
+                }
+            }
+
+            if (modKey === 'night') {
+                const btnText = document.getElementById('mod-night-text');
+                btnText.setAttribute('value', (activeMods.night ? '[ON] ' : '[OFF] ') + 'World Mod: Always Night / Spooky Sky');
+
+                if (activeMods.night) {
+                    scene.setAttribute('background', 'color: #050515');
+                } else {
+                    scene.setAttribute('background', 'color: #87CEEB');
+                }
+            }
+        }
+
+        // --- World Generation ---
+        function generateWorld() {
+            world.innerHTML = ''; // Clear previous blocks
+            const chunkSize = 10;
+
+            for (let x = -chunkSize; x <= chunkSize; x++) {
+                for (let z = -chunkSize; z <= chunkSize; z++) {
+                    // Bedrock / Stone layer
+                    createBlock(x, 0, z, blockColors.stone);
+
+                    // Dirt layer
+                    createBlock(x, 1, z, blockColors.dirt);
+
+                    // Top Grass layer
+                    createBlock(x, 2, z, blockColors.grass);
+                }
+            }
+        }
+
+        function createBlock(x, y, z, color) {
+            const block = document.createElement('a-entity');
+            block.setAttribute('mixin', 'block-geo');
+            block.setAttribute('material', 'color', color);
+            block.setAttribute('position', `${x} ${y} ${z}`);
+            block.setAttribute('class', 'voxel');
+
+            // Interaction Event listeners for Breaking / Placing
+            block.addEventListener('click', function (evt) {
+                if (currentMode === 'spectator') return; // Spectator cannot break or place
+
+                // Right click or VR trigger secondary action -> Place Block
+                if (evt.detail.cursorEl && currentMode === 'creative') {
+                    // Left Click / Trigger = Break Block
+                    world.removeChild(block);
+                }
+            });
+
+            world.appendChild(block);
+        }
+
+        // --- Start World Action ---
+        function startGame() {
+            // Hide Title Menu UI
+            menuUI.setAttribute('visible', 'false');
+
+            // Set WASD Controls active
+            rig.setAttribute('wasd-controls', 'acceleration: ' + (activeMods.speed ? '80' : '20'));
+
+            // Generate Terrain
+            generateWorld();
+
+            // Teleport Player inside world base
+            rig.setAttribute('position', '0 3.6 0');
+        }
+
+        // Enable Right-Click block placement for Desktop testing
+        window.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            if (currentMode === 'spectator') return;
+
+            const cursor = document.getElementById('cursor');
+            const raycaster = cursor.components.raycaster;
+            if (!raycaster) return;
+
+            const intersection = raycaster.getIntersection();
+            if (intersection && intersection.object && intersection.object.el.classList.contains('voxel')) {
+                const hitEl = intersection.object.el;
+                const hitPos = hitEl.getAttribute('position');
+                const normal = intersection.face.normal;
+
+                // Create block offset by face normal
+                createBlock(
+                    hitPos.x + normal.x,
+                    hitPos.y + normal.y,
+                    hitPos.z + normal.z,
+                    blockColors.dirt
+                );
+            }
+        });
+    </script>
+</body>
+</html>
