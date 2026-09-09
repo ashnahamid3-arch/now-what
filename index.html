@@ -1,3 +1,1038 @@
+Messages
+Zhino Muhammad
+ئێستا چالاكه‌
+Zhino Muhammad
+تۆ ئەم گرووپەت دروست کرد
+﻿Messages and calls are secured with end-to-end encryption. Only people in this chat can read, listen to, or share them. Learn more
+سێشەمە 10:59 د.ن
+https://claude.ai/chat/488e008e-827b-4f12-9b11-51925ead967b
+claude.ai
+yo wacha doin
+Edited
+shut up and open it<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lingo — Translator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1B1F2A;
+    --ink-soft:#2B2F3C;
+    --paper:#F7F5F0;
+    --paper-dim:#EDEAE2;
+    --gold:#C98A2C;
+    --gold-soft:#E3B563;
+    --line:#3B4152;
+    --error:#B4472F;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:'IBM Plex Sans', sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    margin:0;
+  }
+  button{
+    font-family:inherit;
+    cursor:pointer;
+    border:none;
+  }
+  input, select{
+    font-family:inherit;
+    font-size:15px;
+  }
+  #app{min-height:100vh;}
+
+  /* ---------- Auth screen ---------- */
+  .auth-wrap{
+    display:flex;
+    min-height:100vh;
+  }
+  .auth-brand{
+    flex:1.1;
+    background:var(--ink);
+    color:var(--paper);
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    padding:56px 48px;
+  }
+  .auth-brand .mark{
+    font-family:'Fraunces', serif;
+    font-size:22px;
+    letter-spacing:0.02em;
+  }
+  .auth-brand .pitch h1{
+    font-size:44px;
+    line-height:1.08;
+    color:var(--paper);
+    max-width:420px;
+  }
+  .auth-brand .pitch p{
+    margin-top:18px;
+    max-width:380px;
+    color:#B7BCC9;
+    line-height:1.6;
+    font-size:15px;
+  }
+  .auth-brand .foot{
+    color:#6B7180;
+    font-size:13px;
+  }
+  .auth-form-side{
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:40px;
+  }
+  .auth-card{
+    width:100%;
+    max-width:360px;
+  }
+  .auth-card h2{
+    font-size:26px;
+    margin-bottom:6px;
+  }
+  .auth-card .sub{
+    color:#6B7180;
+    font-size:14px;
+    margin-bottom:28px;
+  }
+  .field{
+    margin-bottom:16px;
+  }
+  .field label{
+    display:block;
+    font-size:13px;
+    color:#5A5F6E;
+    margin-bottom:6px;
+  }
+  .field input{
+    width:100%;
+    padding:11px 13px;
+    border:1px solid #D8D4C9;
+    border-radius:var(--radius);
+    background:#fff;
+    color:var(--ink);
+  }
+  .field input:focus{
+    outline:2px solid var(--gold-soft);
+    outline-offset:1px;
+    border-color:var(--gold);
+  }
+  .btn-primary{
+    width:100%;
+    padding:12px;
+    background:var(--ink);
+    color:var(--paper);
+    border-radius:var(--radius);
+    font-size:15px;
+    font-weight:500;
+    margin-top:6px;
+  }
+  .btn-primary:hover{ background:var(--ink-soft); }
+  .switch-line{
+    margin-top:18px;
+    font-size:14px;
+    color:#5A5F6E;
+  }
+  .switch-line button{
+    background:none;
+    color:var(--gold);
+    font-weight:600;
+    padding:0;
+    text-decoration:underline;
+  }
+  .form-error{
+    background:#FBEAE5;
+    color:var(--error);
+    border-radius:8px;
+    padding:10px 12px;
+    font-size:13px;
+    margin-bottom:16px;
+  }
+  .form-note{
+    background:#F0EEE7;
+    color:#5A5F6E;
+    border-radius:8px;
+    padding:10px 12px;
+    font-size:12.5px;
+    margin-top:20px;
+    line-height:1.5;
+  }
+
+  /* ---------- App shell ---------- */
+  .shell{ min-height:100vh; display:flex; flex-direction:column; transition:background 0.5s ease; }
+  .page-head h1{ font-size:28px; color:var(--paper); text-shadow:0 2px 10px rgba(0,0,0,0.35); }
+  .page-head p{ color:rgba(247,245,240,0.82); margin-top:6px; font-size:14.5px; text-shadow:0 1px 6px rgba(0,0,0,0.3); }
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:16px 32px;
+    background:var(--ink);
+    color:var(--paper);
+  }
+  .topbar .brand{
+    font-family:'Fraunces', serif;
+    font-size:20px;
+  }
+  .topbar nav{
+    display:flex;
+    gap:6px;
+  }
+  .topbar nav button{
+    background:none;
+    color:#B7BCC9;
+    padding:8px 14px;
+    border-radius:8px;
+    font-size:14px;
+  }
+  .topbar nav button.active{
+    background:var(--ink-soft);
+    color:var(--paper);
+  }
+  .topbar nav button:hover{ color:var(--paper); }
+  .topbar .who{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    font-size:13px;
+    color:#B7BCC9;
+  }
+  .topbar .who .role-tag{
+    background:var(--gold);
+    color:var(--ink);
+    padding:2px 8px;
+    border-radius:20px;
+    font-size:11px;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+  }
+  .topbar .who button{
+    background:none;
+    color:#B7BCC9;
+    font-size:13px;
+    text-decoration:underline;
+  }
+  main{ flex:1; padding:36px; }
+  .page{ max-width:880px; margin:0 auto; }
+  .page-head{ margin-bottom:24px; }
+
+  /* Translator */
+  .translator-panel{
+    border-radius:16px;
+    padding:36px;
+    transition:background 0.4s ease;
+  }
+  .translate-grid{
+    display:grid;
+    grid-template-columns:1fr 44px 1fr;
+    gap:14px;
+    align-items:start;
+  }
+  .lang-box{
+    background:rgba(255,255,255,0.92);
+    border-radius:var(--radius);
+    padding:16px;
+    display:flex;
+    flex-direction:column;
+    min-height:220px;
+  }
+  .lang-box select{
+    align-self:flex-start;
+    border:none;
+    background:var(--paper-dim);
+    padding:6px 10px;
+    border-radius:6px;
+    font-size:13px;
+    margin-bottom:10px;
+    color:var(--ink);
+  }
+  .lang-box textarea{
+    flex:1;
+    border:none;
+    background:transparent;
+    resize:none;
+    font-size:15px;
+    font-family:inherit;
+    color:var(--ink);
+    line-height:1.5;
+  }
+  .lang-box textarea:focus{ outline:none; }
+  .lang-box .output-text{
+    flex:1;
+    font-size:15px;
+    line-height:1.5;
+    color:var(--ink);
+    white-space:pre-wrap;
+  }
+  .swap-btn{
+    margin-top:44px;
+    width:44px;
+    height:44px;
+    border-radius:50%;
+    background:rgba(255,255,255,0.92);
+    color:var(--ink);
+    font-size:16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .swap-btn:hover{ background:#fff; }
+  .translate-actions{
+    margin-top:18px;
+    display:flex;
+    justify-content:flex-end;
+  }
+  .translate-actions button{
+    background:var(--ink);
+    color:var(--paper);
+    padding:11px 24px;
+    border-radius:var(--radius);
+    font-size:14.5px;
+    font-weight:500;
+  }
+  .translate-actions button:disabled{ opacity:0.6; cursor:default; }
+  .translate-status{
+    margin-top:10px;
+    font-size:13px;
+    color:rgba(247,245,240,0.85);
+    text-shadow:0 1px 6px rgba(0,0,0,0.3);
+  }
+  .translate-status.err{ color:#FF9B85; }
+
+  /* Profile */
+  .card{
+    background:#fff;
+    border:1px solid #E7E3D9;
+    border-radius:14px;
+    padding:28px;
+    margin-bottom:20px;
+  }
+  .card h3{ font-size:17px; margin-bottom:4px; }
+  .card .desc{ color:#6B7180; font-size:13.5px; margin-bottom:18px; }
+  .profile-row{
+    display:flex;
+    justify-content:space-between;
+    padding:10px 0;
+    border-bottom:1px solid #F0EEE7;
+    font-size:14.5px;
+  }
+  .profile-row:last-child{ border-bottom:none; }
+  .profile-row .k{ color:#6B7180; }
+  .theme-input-row{ display:flex; gap:10px; }
+  .theme-input-row input{
+    flex:1;
+    padding:11px 13px;
+    border:1px solid #D8D4C9;
+    border-radius:var(--radius);
+  }
+  .theme-input-row button{
+    background:var(--ink);
+    color:var(--paper);
+    padding:0 20px;
+    border-radius:var(--radius);
+    font-size:14px;
+    font-weight:500;
+  }
+  .theme-preview{
+    margin-top:14px;
+    height:64px;
+    border-radius:10px;
+  }
+  .theme-hint{
+    margin-top:10px;
+    font-size:12.5px;
+    color:#8B8F9A;
+  }
+
+  /* Admin */
+  table{ width:100%; border-collapse:collapse; }
+  th,td{ text-align:left; padding:11px 8px; font-size:14px; border-bottom:1px solid #F0EEE7; }
+  th{ color:#6B7180; font-weight:500; font-size:12.5px; text-transform:uppercase; letter-spacing:0.03em; }
+  .badge{
+    padding:2px 9px;
+    border-radius:20px;
+    font-size:11.5px;
+    font-weight:600;
+  }
+  .badge.admin{ background:#FBEDD7; color:#8A5A15; }
+  .badge.user{ background:#EAEDF4; color:#3E4657; }
+
+  @media (max-width: 760px){
+    .auth-wrap{ flex-direction:column; }
+    .auth-brand{ padding:32px 26px; }
+    .auth-brand .pitch h1{ font-size:32px; }
+    .translate-grid{ grid-template-columns:1fr; }
+    .swap-btn{ margin:0 auto; transform:rotate(90deg); }
+    main{ padding:22px; }
+    .topbar{ padding:14px 18px; }
+    .topbar nav button{ padding:7px 10px; font-size:13px; }
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+(function(){
+  const app = document.getElementById('app');
+  let session = null; // {email, role, theme}
+  let view = 'login'; // login | register | translator | profile | admin
+  let authError = '';
+
+  const LANGS = [
+    ['en','English'],['es','Spanish'],['fr','French'],['de','German'],
+    ['it','Italian'],['pt','Portuguese'],['ru','Russian'],['zh','Chinese'],
+    ['ja','Japanese'],['ko','Korean'],['ar','Arabic'],['hi','Hindi'],
+    ['tr','Turkish'],['nl','Dutch'],['sv','Swedish'],['pl','Polish'],
+    ['ku','Kurdish']
+  ];
+
+  const ADMIN_CODE = atob('YWRtaW4yMDI2'); // not a plain string in source — decodes to the admin code
+  const ADMIN_EMAIL = 'admin@lingo.app';
+
+  let sourceLang = 'en';
+  let targetLang = 'es';
+  let sourceText = '';
+  let outputText = '';
+  let translating = false;
+  let translateErr = '';
+
+  const THEME_PRESETS = {
+    ocean:      ['#0B4F6C','#1E88A8','#5FD0D0'],
+    forest:     ['#123524','#1F6E43','#7BB661'],
+    sunset:     ['#3B1F3E','#C1436D','#F4A742'],
+    night:      ['#05070F','#1B1F3B','#3E4C8C'],
+    space:      ['#05070F','#221A45','#5B3E9C'],
+    fire:       ['#2B0A05','#B4472F','#F0A93A'],
+    desert:     ['#3A2A1B','#B77B3F','#E9C48A'],
+    candy:      ['#4A1942','#D6579A','#FFC1D9'],
+    mint:       ['#0F3D34','#2E9E7A','#A8E6C9'],
+    lavender:   ['#2D2140','#6E56A6','#C9B8E8'],
+    rose:       ['#3D1620','#9C3B4F','#E8A0A9'],
+    monochrome: ['#101114','#3A3D45','#8A8D96'],
+    autumn:     ['#3A1F0E','#A5551F','#E0A15A'],
+    coffee:     ['#2A1B12','#5C3A21','#B4835A']
+  };
+
+  function hashStr(s){
+    let h = 0;
+    for(let i=0;i<s.length;i++){ h = (h*31 + s.charCodeAt(i)) >>> 0; }
+    return h;
+  }
+
+  function themeGradient(name){
+    const key = (name||'').trim().toLowerCase();
+    if(!key) return 'linear-gradient(135deg,#2B2F3C,#1B1F2A)';
+    for(const k in THEME_PRESETS){
+      if(key.includes(k)){
+        const c = THEME_PRESETS[k];
+        return linear-gradient(135deg, ${c[0]}, ${c[1]} 55%, ${c[2]});
+      }
+    }
+    const h = hashStr(key);
+    const hue1 = h % 360;
+    const hue2 = (hue1 + 46) % 360;
+    const hue3 = (hue1 + 92) % 360;
+    return linear-gradient(135deg, hsl(${hue1} 55% 22%), hsl(${hue2} 60% 40%) 55%, hsl(${hue3} 65% 62%));
+  }
+
+  // ---------- storage helpers ----------
+  async function getUser(email){
+    try{
+      const r = await window.storage.get('user:'+email.toLowerCase(), true);
+      return r ? JSON.parse(r.value) : null;
+    }catch(e){ return null; }
+  }
+  async function saveUser(u){
+    await window.storage.set('user:'+u.email.toLowerCase(), JSON.stringify(u), true);
+  }
+  async function listUsers(){
+    const r = await window.storage.list('user:', true);
+    if(!r || !r.keys) return [];
+    const out = [];
+    for(const k of r.keys){
+      try{
+        const rec = await window.storage.get(k, true);
+        if(rec) out.push(JSON.parse(rec.value));
+      }catch(e){}
+    }
+    return out;
+  }
+
+  // ---------- render ----------
+  function render(){
+    if(!session){
+      app.innerHTML = view === 'register' ? registerHTML() : loginHTML();
+      bindAuthEvents();
+      return;
+    }
+    app.innerHTML = shellHTML();
+    bindShellEvents();
+  }
+
+  function loginHTML(){
+    return `
+    <div class="auth-wrap">
+      <div class="auth-brand">
+        <div class="mark">Lingo</div>
+        <div class="pitch">
+          <h1>Say it in any language.</h1>
+          <p>Sign in to translate text across languages, and shape your own workspace background around any theme you like.</p>
+        </div>
+        <div class="foot">A small translation workspace, built for one team.</div>
+      </div>
+      <div class="auth-form-side">
+        <div class="auth-card">
+          <h2>Welcome back</h2>
+          <div class="sub">Sign in to keep translating.</div>
+          ${authError ? <div class="form-error">${authError}</div> : ''}
+          <form id="login-form">
+            <div class="field">
+              <label for="li-email">Email</label>
+              <input id="li-email" type="email" required autocomplete="username">
+            </div>
+            <div class="field">
+              <label for="li-pass">Password</label>
+              <input id="li-pass" type="password" required autocomplete="current-password">
+            </div>
+            <button class="btn-primary" type="submit">Log in</button>
+          </form>
+          <div class="switch-line">No account yet? <button id="go-register">Create one</button></div>
+          <div class="switch-line"><button id="toggle-admin-code">Admin access</button></div>
+          <div id="admin-code-box" style="display:none;margin-top:10px;">
+            <div class="theme-input-row">
+              <input id="admin-code-input" type="password" placeholder="Admin code">
+              <button id="admin-code-submit">Continue</button>
+            </div>
+          </div>
+          <div class="form-note">Demo app: accounts and passwords are stored for this workspace only. Don't reuse a real password.</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function registerHTML(){
+    return `
+    <div class="auth-wrap">
+      <div class="auth-brand">
+        <div class="mark">Lingo</div>
+        <div class="pitch">
+          <h1>Create your workspace account.</h1>
+          <p>The very first person to sign up becomes the admin and can see who else has joined.</p>
+        </div>
+        <div class="foot">A small translation workspace, built for one team.</div>
+      </div>
+      <div class="auth-form-side">
+        <div class="auth-card">
+          <h2>Create account</h2>
+          <div class="sub">It takes a few seconds.</div>
+          ${authError ? <div class="form-error">${authError}</div> : ''}
+          <form id="register-form">
+            <div class="field">
+              <label for="re-email">Email</label>
+              <input id="re-email" type="email" required autocomplete="username" value="ashnahamid3@gmail.com">
+            </div>
+            <div class="field">
+              <label for="re-pass">Password</label>
+              <input id="re-pass" type="password" required autocomplete="new-password" minlength="4">
+            </div>
+            <button class="btn-primary" type="submit">Create account</button>
+          </form>
+          <div class="switch-line">Already have one? <button id="go-login">Log in</button></div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function bindAuthEvents(){
+    const goRegister = document.getElementById('go-register');
+    const goLogin = document.getElementById('go-login');
+    if(goRegister) goRegister.onclick = () => { authError=''; view='register'; render(); };
+    if(goLogin) goLogin.onclick = () => { authError=''; view='login'; render(); };
+
+    const toggleAdminCode = document.getElementById('toggle-admin-code');
+    if(toggleAdminCode){
+      toggleAdminCode.onclick = () => {
+        const box = document.getElementById('admin-code-box');
+        box.style.display = box.style.display === 'none' ? 'block' : 'none';
+        const input = document.getElementById('admin-code-input');
+        if(box.style.display === 'block') input.focus();
+      };
+    }
+    const adminCodeSubmit = document.getElementById('admin-code-submit');
+    if(adminCodeSubmit){
+      adminCodeSubmit.onclick = async () => {
+        const codeInput = document.getElementById('admin-code-input');
+        const code = codeInput.value.trim().toLowerCase().replace(/\s+/g,'');
+        if(code !== ADMIN_CODE){
+          authError = 'That admin code is not correct.';
+          render();
+          return;
+        }
+        try{
+          if(typeof window.storage === 'undefined'){
+            authError = 'Storage isn\'t available here — open this app inside the Claude artifact panel.';
+            render();
+            return;
+          }
+          let adminUser = await getUser(ADMIN_EMAIL);
+          if(!adminUser){
+            adminUser = { email: ADMIN_EMAIL, password: btoa(ADMIN_CODE), role: 'admin', theme: '' };
+            await saveUser(adminUser);
+          }
+          session = { email: adminUser.email, role: 'admin', theme: adminUser.theme || '' };
+          authError = '';
+          view = 'translator';
+          render();
+        }catch(err){
+          authError = 'Something went wrong: ' + (err && err.message ? err.message : String(err));
+          render();
+        }
+      };
+    }
+
+    const loginForm = document.getElementById('login-form');
+    if(loginForm){
+      loginForm.onsubmit = async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('li-email').value.trim();
+        const pass = document.getElementById('li-pass').value;
+        try{
+          if(typeof window.storage === 'undefined'){
+            authError = 'Storage isn\'t available here — open this app inside the Claude artifact panel, not as a standalone downloaded file.';
+            render();
+            return;
+          }
+          const u = await getUser(email);
+          if(!u || u.password !== btoa(pass)){
+            authError = 'Email or password is incorrect.';
+            render();
+            return;
+          }
+          session = { email: u.email, role: u.role, theme: u.theme || '' };
+          authError = '';
+          view = 'translator';
+          render();
+        }catch(err){
+          authError = 'Something went wrong logging in: ' + (err && err.message ? err.message : String(err));
+          render();
+        }
+      };
+    }
+    const regForm = document.getElementById('register-form');
+    if(regForm){
+      regForm.onsubmit = async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('re-email').value.trim();
+        const pass = document.getElementById('re-pass').value;
+        try{
+          if(typeof window.storage === 'undefined'){
+            authError = 'Storage isn\'t available here — open this app inside the Claude artifact panel, not as a standalone downloaded file.';
+            render();
+            return;
+          }
+          const existing = await getUser(email);
+          if(existing){
+            authError = 'An account with that email already exists.';
+            render();
+            return;
+          }
+          const users = await listUsers();
+          const role = users.length === 0 ? 'admin' : 'user';
+          const newUser = { email, password: btoa(pass), role, theme: '' };
+          await saveUser(newUser);
+          session = { email, role, theme: '' };
+          authError = '';
+          view = 'translator';
+          render();
+        }catch(err){
+          authError = 'Something went wrong creating the account: ' + (err && err.message ? err.message : String(err));
+          render();
+        }
+      };
+    }
+  }
+
+  function navBtn(id, label){
+    return <button data-nav="${id}" class="${view===id?'active':''}">${label}</button>;
+  }
+
+  function shellHTML(){
+    let body = '';
+    if(view === 'profile') body = profileHTML();
+    else if(view === 'admin' && session.role === 'admin') body = adminHTML();
+    else body = translatorHTML();
+
+    const pageBg = themeGradient(session.theme);
+
+    return `
+    <div class="shell" style="background:${pageBg}">
+      <div class="topbar">
+        <div class="brand">Lingo</div>
+        <nav>
+          ${navBtn('translator','Translator')}
+          ${navBtn('profile','Profile')}
+          ${session.role === 'admin' ? navBtn('admin','Admin') : ''}
+        </nav>
+        <div class="who">
+          <span>${session.email}</span>
+          <span class="role-tag">${session.role}</span>
+          <button id="logout-btn">Log out</button>
+        </div>
+      </div>
+      <main><div class="page">${body}</div></main>
+    </div>`;
+  }
+
+  function translatorHTML(){
+    const langOptions = (selected) => LANGS.map(([code,name]) =>
+      <option value="${code}" ${code===selected?'selected':''}>${name}</option>).join('');
+
+    return `
+    <div class="page-head">
+      <h1>Translate</h1>
+      <p>Write on the left, pick your languages, and translate.</p>
+    </div>
+    <div class="translator-panel">
+      <div class="translate-grid">
+        <div class="lang-box">
+          <select id="src-lang">${langOptions(sourceLang)}</select>
+          <textarea id="src-text" placeholder="Type something to translate…">${sourceText}</textarea>
+        </div>
+        <button class="swap-btn" id="swap-btn" title="Swap languages">⇄</button>
+        <div class="lang-box">
+          <select id="tgt-lang">${langOptions(targetLang)}</select>
+          <div class="output-text" id="out-text">${outputText || '<span style="opacity:.5">Translation will appear here.</span>'}</div>
+        </div>
+      </div>
+      <div class="translate-actions">
+        <button id="translate-btn" ${translating?'disabled':''}>${translating?'Translating…':'Translate'}</button>
+      </div>
+      ${translateErr ? <div class="translate-status err">${translateErr}</div> : ''}
+    </div>`;
+  }
+
+  function profileHTML(){
+    const preview = themeGradient(session.theme);
+    return `
+    <div class="page-head">
+      <h1>Profile</h1>
+      <p>Your account details and workspace settings.</p>
+    </div>
+    <div class="card">
+      <h3>Account</h3>
+      <div class="desc">Basic details for this workspace.</div>
+      <div class="profile-row"><span class="k">Email</span><span>${session.email}</span></div>
+      <div class="profile-row"><span class="k">Role</span><span>${session.role}</span></div>
+    </div>
+    <div class="card">
+      <h3>Background theme</h3>
+      <div class="desc">Type any theme you like — a place, a mood, a color, anything — and the translator background will shift to match it.</div>
+      <div class="theme-input-row">
+        <input id="theme-input" type="text" placeholder="e.g. ocean, sunset, midnight jazz…" value="${session.theme || ''}">
+        <button id="theme-apply">Apply</button>
+      </div>
+      <div class="theme-preview" style="background:${preview}"></div>
+      <div class="theme-hint">Current theme: ${session.theme ? session.theme : 'default'}</div>
+    </div>
+    ${session.role === 'admin' ? `
+    <div class="card">
+      <h3>Grant admin access</h3>
+      <div class="desc">Enter the email of an existing account to make that person an admin.</div>
+      <div class="theme-input-row">
+        <input id="grant-admin-input" type="email" placeholder="someone@example.com">
+        <button id="grant-admin-btn">Make admin</button>
+      </div>
+      <div class="theme-hint" id="grant-admin-msg"></div>
+    </div>` : ''}`;
+  }
+
+  function adminHTML(){
+    return `
+    <div class="page-head">
+      <h1>Admin</h1>
+      <p>Only admins can see registered emails.</p>
+    </div>
+    <div class="card" id="admin-card">
+      <h3>Workspace members</h3>
+      <div class="desc">Loading…</div>
+    </div>`;
+  }
+
+  async function loadAdminTable(){
+    const card = document.getElementById('admin-card');
+    if(!card) return;
+    const users = await listUsers();
+    users.sort((a,b) => a.email.localeCompare(b.email));
+    card.innerHTML = `
+      <h3>Workspace members</h3>
+      <div class="desc">${users.length} account${users.length===1?'':'s'} registered.</div>
+      <table>
+        <thead><tr><th>Email</th><th>Role</th><th>Theme</th></tr></thead>
+        <tbody>
+          ${users.map(u => `<tr>
+            <td>${u.email}</td>
+            <td><span class="badge ${u.role}">${u.role}</span></td>
+            <td>${u.theme ? u.theme : '<span style="color:#B0B4BD">default</span>'}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`;
+  }
+
+  function bindShellEvents(){
+    document.querySelectorAll('[data-nav]').forEach(btn => {
+      btn.onclick = () => { view = btn.getAttribute('data-nav'); translateErr=''; render(); };
+    });
+    const logout = document.getElementById('logout-btn');
+    if(logout) logout.onclick = () => {
+      session = null; view = 'login'; authError='';
+      sourceText=''; outputText=''; translateErr='';
+      render();
+    };
+
+    if(view === 'translator'){
+      const srcLangEl = document.getElementById('src-lang');
+      const tgtLangEl = document.getElementById('tgt-lang');
+      const srcTextEl = document.getElementById('src-text');
+      const swapBtn = document.getElementById('swap-btn');
+      const translateBtn = document.getElementById('translate-btn');
+
+      srcLangEl.onchange = () => { sourceLang = srcLangEl.value; };
+      tgtLangEl.onchange = () => { targetLang = tgtLangEl.value; };
+      srcTextEl.oninput = () => { sourceText = srcTextEl.value; };
+      swapBtn.onclick = () => {
+        [sourceLang, targetLang] = [targetLang, sourceLang];
+        [sourceText, outputText] = [outputText, sourceText];
+        render();
+      };
+      translateBtn.onclick = async () => {
+        if(!sourceText.trim()){ translateErr = 'Type something to translate first.'; render(); return; }
+        translating = true; translateErr=''; render();
+        try{
+          const srcName = (LANGS.find(l => l[0] === sourceLang) || [null,sourceLang])[1];
+          const tgtName = (LANGS.find(l => l[0] === targetLang) || [null,targetLang])[1];
+          const response = await fetch("https://api.anthropic.com/v1/messages", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              model: "claude-sonnet-4-6",
+              max_tokens: 1000,
+              messages: [
+                {
+                  role: "user",
+                  content: Translate the following text from ${srcName} to ${tgtName}. Reply with ONLY the translated text — no quotation marks, no notes, no explanation.\n\nText:\n${sourceText}
+                }
+              ]
+            })
+          });
+          const data = await response.json();
+          const textBlocks = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
+          if(textBlocks){
+            outputText = textBlocks;
+          }else{
+            translateErr = 'Could not get a translation just now. Try again.';
+          }
+        }catch(e){
+          translateErr = 'Translation is unavailable right now.';
+        }
+        translating = false;
+        render();
+      };
+    }
+
+    if(view === 'profile'){
+      const applyBtn = document.getElementById('theme-apply');
+      const input = document.getElementById('theme-input');
+      input.oninput = () => {
+        const preview = document.querySelector('.theme-preview');
+        if(preview) preview.style.background = themeGradient(input.value);
+      };
+      applyBtn.onclick = async () => {
+        const val = input.value.trim();
+        session.theme = val;
+        const u = await getUser(session.email);
+        if(u){ u.theme = val; await saveUser(u); }
+        render();
+      };
+
+      const grantBtn = document.getElementById('grant-admin-btn');
+      if(grantBtn){
+        grantBtn.onclick = async () => {
+          const grantInput = document.getElementById('grant-admin-input');
+          const msg = document.getElementById('grant-admin-msg');
+          const targetEmail = grantInput.value.trim();
+          if(!targetEmail){ msg.textContent = 'Enter an email first.'; return; }
+          const target = await getUser(targetEmail);
+          if(!target){
+            msg.textContent = 'No account with that email yet — they need to sign up first.';
+            return;
+          }
+          target.role = 'admin';
+          await saveUser(target);
+          msg.textContent = ${target.email} is now an admin.;
+          grantInput.value = '';
+        };
+      }
+    }
+
+    if(view === 'admin' && session.role === 'admin'){
+      loadAdminTable();
+    }
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
+dont type
+no no non nono no no no
+1:21 پ.ن
+https://github.com/ashnahamid3-arch/REALISTIC/blob/main/INDEX.html
+github.com
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; background: #f0f2f5; }
+    #info { text-align: center; margin-top: 10px; }
+    #board { display: grid; gap: 5px; margin-top: 15px; }
+    .tile { color: white; font-size: 24px; font-weight: bold; display: flex; 
+            align-items: center; justify-content: center; cursor: pointer; border-radius: 6px; }
+    .empty { background-color: #ccc !important; cursor: default; }
+  </style>
+</head>
+<body>
+
+  <div id="info">
+    <h2 id="chapter-title">Chapter 1</h2>
+    <h3 id="level-title">Level 1</h3>
+  </div>
+
+  <div id="board"></div>
+
+  <script>
+    let currentChapter = 1;
+    let currentLevel = 1;
+    let size = 3;
+    let tiles = [];
+
+    const colors = ["#4CAF50", "#2196F3", "#9C27B0", "#FF9800", "#E91E63"];
+
+    function startLevel() {
+      size = currentChapter + 2; // Grid size grows with chapters
+      
+      document.getElementById('chapter-title').innerText = Chapter ${currentChapter};
+      document.getElementById('level-title').innerText = Level ${currentLevel} of 20 (${size}x${size} Grid);
+
+      // Build the solved puzzle first
+      let totalTiles = size * size;
+      tiles = [];
+      for (let i = 1; i < totalTiles; i++) tiles.push(i);
+      tiles.push(""); // Empty space at the end
+
+      // Level 1 starts with very few random moves, increasing with each level
+      let scrambleMoves = (currentChapter - 1) * 20 + currentLevel;
+
+      // Scramble by making real valid moves so it's always beatable!
+      for (let i = 0; i < scrambleMoves; i++) {
+        makeRandomValidMove();
+      }
+
+      drawBoard();
+    }
+
+    function makeRandomValidMove() {
+      const emptyIndex = tiles.indexOf("");
+      const row = Math.floor(emptyIndex / size);
+      const col = emptyIndex % size;
+      const neighbors = [];
+
+      if (row > 0) neighbors.push(emptyIndex - size); // Up
+      if (row < size - 1) neighbors.push(emptyIndex + size); // Down
+      if (col > 0) neighbors.push(emptyIndex - 1); // Left
+      if (col < size - 1) neighbors.push(emptyIndex + 1); // Right
+
+      const randomNeighbor = neighbors[Math.floor(Math.random() * neighbors.length)];
+      [tiles[emptyIndex], tiles[randomNeighbor]] = [tiles[randomNeighbor], tiles[emptyIndex]];
+    }
+
+    function drawBoard() {
+      const board = document.getElementById('board');
+      board.style.gridTemplateColumns = repeat(${size}, 70px);
+      board.innerHTML = "";
+
+      tiles.forEach((tile, index) => {
+        const tileDiv = document.createElement('div');
+        tileDiv.className = tile === "" ? "tile empty" : "tile";
+        tileDiv.style.width = "70px";
+        tileDiv.style.height = "70px";
+        tileDiv.style.backgroundColor = colors[currentChapter - 1];
+        tileDiv.innerText = tile;
+        tileDiv.onclick = () => moveTile(index);
+        board.appendChild(tileDiv);
+      });
+    }
+
+    function moveTile(index) {
+      const emptyIndex = tiles.indexOf("");
+      const row = Math.floor(index / size);
+      const col = index % size;
+      const emptyRow = Math.floor(emptyIndex / size);
+      const emptyCol = emptyIndex % size;
+
+      const isAdjacent = (Math.abs(row - emptyRow) + Math.abs(col - emptyCol)) === 1;
+
+      if (isAdjacent) {
+        [tiles[index], tiles[emptyIndex]] = [tiles[emptyIndex], tiles[index]];
+        drawBoard();
+        checkWin();
+      }
+    }
+
+    function checkWin() {
+      for (let i = 0; i < tiles.length - 1; i++) {
+        if (tiles[i] !== i + 1) return;
+      }
+
+      alert("Level Complete!");
+      currentLevel++;
+
+      if (currentLevel > 20) {
+        currentLevel = 1;
+        currentChapter++;
+        if (currentChapter > 5) {
+          alert("Awesome job! You beat all 5 Chapters!");
+          currentChapter = 1;
+        }
+      }
+      startLevel();
+    }
+
+    startLevel();
+  </script>
+
+</body>
+</html>
+2:39 پ.ن
+file:///C:/Users/zhino/.html
+file:///C:/Users/zhino/.html
 <!DOCTYPE html>
 <html>
 <head>
@@ -672,7 +1707,4 @@ cdnjs.cloudflare.com
   </script>
 
 </body>
-</html>\
-cdnjs.cloudflare.com
-Compose
-Write to Zhino Muhammad
+</html>
