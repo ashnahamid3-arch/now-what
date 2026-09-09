@@ -1,244 +1,678 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VR Minecraft - WebXR Edition</title>
-    <!-- A-Frame VR Framework -->
-    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-    <style>
-        body { margin: 0; overflow: hidden; font-family: sans-serif; }
-        #vr-notice {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background: rgba(0,0,0,0.8);
-            color: white;
-            padding: 10px;
-            border-radius: 8px;
-            z-index: 999;
-            pointer-events: none;
-        }
-    </style>
+  <style>
+    body { margin: 0; overflow: hidden; font-family: sans-serif; }
+    #crosshair {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      color: white; font-size: 24px; font-weight: bold;
+      pointer-events: none; text-shadow: 1px 1px 2px black;
+    }
+    #instructions {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      color: white; background: rgba(0,0,0,0.85);
+      padding: 20px 30px; border-radius: 10px; text-align: center;
+      cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/PointerLockControls.js"></script>
 </head>
 <body>
 
-    <div id="vr-notice">
-        <b>VR Minecraft</b><br>
-        • Desktop: Click & Drag to Look | WASD to Walk | Click Menu Buttons<br>
-        • VR Headset: Point controller laser & trigger to select / break / place blocks
-    </div>
+  <div id="crosshair">+</div>
+  <div id="instructions">
+    <h2>3D Block Builder</h2>
+    <p>Click to Play</p>
+    <p>Move: <b>W, A, S, D</b> | Jump: <b>SPACE</b><br>
+    Break Block: <b>Left Click</b> | Place Block: <b>Right Click</b></p>
+  </div>
 
-    <a-scene id="main-scene" background="color: #87CEEB">
-        
-        <!-- Assets & Textures -->
-        <a-assets>
-            <a-mixin id="block-geo" geometry="primitive: box; width: 1; height: 1; depth: 1"></a-mixin>
-        </a-assets>
+  <script>
+    // 1. Scene & Setup
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xa0d8ef);
+    scene.fog = new THREE.FogExp2(0xa0d8ef, 0.02);
 
-        <!-- Player Rigid Body & VR Rig -->
-        <a-entity id="rig" position="0 1.6 0">
-            <!-- Camera / VR Headset Head -->
-            <a-camera id="camera" look-controls="pointerLockEnabled: false">
-                <!-- Cursor for Desktop / Non-6DOF fallback -->
-                <a-cursor id="cursor" raycaster="objects: .clickable, .voxel" color="#FFFFFF"></a-cursor>
-            </a-camera>
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    document.body.appendChild(renderer.domElement);
 
-            <!-- Right VR Controller (Laser pointer for UI & Mining) -->
-            <a-entity id="right-hand" laser-controls="hand: right" raycaster="objects: .clickable, .voxel; far: 8"></a-entity>
-            <!-- Left VR Controller -->
-            <a-entity id="left-hand" laser-controls="hand: left"></a-entity>
-        </a-entity>
+    // Array to store breakable blocks
+    const blocks = [];
 
-        <!-- Ambient Lighting -->
-        <a-light type="ambient" color="#FFF" intensity="0.6"></a-light>
-        <a-light type="directional" color="#FFF" intensity="0.6" position="-1 2 1"></a-light>
+    // 2. First-Person Controls
+    const controls = new THREE.PointerLockControls(camera, document.body);
+    const instructions = document.getElementById('instructions');
 
-        <!-- ======================================================= -->
-        <!--                   VR TITLE & MOD MENU                   -->
-        <!-- ======================================================= -->
-        <a-entity id="menu-ui" position="0 2 -3">
-            <!-- Main Title Panel -->
-            <a-plane width="3.2" height="2.8" color="#1e1e1e" opacity="0.9" position="0 0 0">
-                <a-text value="MINECRAFT VR" align="center" position="0 1.1 0.01" scale="1.5 1.5 1.5" color="#55FF55"></a-text>
-                <a-text id="current-mode-label" value="Current Mode: Creative" align="center" position="0 0.8 0.01" scale="0.6 0.6 0.6" color="#FFFF55"></a-text>
+    instructions.addEventListener('click', () => controls.lock());
+    controls.addEventListener('lock', () => instructions.style.display = 'none');
+    controls.addEventListener('unlock', () => instructions.style.display = 'block');
+    scene.add(controls.getObject());
 
-                <!-- Game Mode Buttons -->
-                <a-entity position="0 0.3 0.01">
-                    <a-plane class="clickable" onclick="setGameMode('creative')" width="0.9" height="0.3" color="#333" position="-1 0 0">
-                        <a-text value="Creative" align="center" position="0 0 0.01" scale="0.5 0.5 0.5"></a-text>
-                    </a-plane>
-                    <a-plane class="clickable" onclick="setGameMode('survival')" width="0.9" height="0.3" color="#333" position="0 0 0">
-                        <a-text value="Survival" align="center" position="0 0 0.01" scale="0.5 0.5 0.5"></a-text>
-                    </a-plane>
-                    <a-plane class="clickable" onclick="setGameMode('spectator')" width="0.9" height="0.3" color="#333" position="1 0 0">
-                        <a-text value="Spectator" align="center" position="0 0 0.01" scale="0.5 0.5 0.5"></a-text>
-                    </a-plane>
-                </a-entity>
+    let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false, canJump = false;
+    const velocity = new THREE.Vector3();
+    const direction = new THREE.Vector3();
+    let prevTime = performance.now();
 
-                <!-- Mod / Addon Manager Section -->
-                <a-text value="--- MODS & GAME MODIFIERS ---" align="center" position="0 -0.1 0.01" scale="0.5 0.5 0.5" color="#AAAAAA"></a-text>
-                
-                <a-entity position="0 -0.5 0.01">
-                    <a-plane id="mod-speed-btn" class="clickable" onclick="toggleMod('speed')" width="2.8" height="0.25" color="#444" position="0 0.15 0">
-                        <a-text id="mod-speed-text" value="[OFF] Speed Mod: Super Movement Speed" align="center" position="0 0 0.01" scale="0.4 0.4 0.4"></a-text>
-                    </a-plane>
+    document.addEventListener('keydown', (e) => {
+      switch (e.code) {
+        case 'KeyW': moveForward = true; break;
+        case 'KeyS': moveBackward = true; break;
+        case 'KeyA': moveLeft = true; break;
+        case 'KeyD': moveRight = true; break;
+        case 'Space': if (canJump) velocity.y += 12; canJump = false; break;
+      }
+    });
 
-                    <a-plane id="mod-night-btn" class="clickable" onclick="toggleMod('night')" width="2.8" height="0.25" color="#444" position="0 -0.15 0">
-                        <a-text id="mod-night-text" value="[OFF] World Mod: Always Night / Spooky Sky" align="center" position="0 0 0.01" scale="0.4 0.4 0.4"></a-text>
-                    </a-plane>
-                </a-entity>
+    document.addEventListener('keyup', (e) => {
+      switch (e.code) {
+        case 'KeyW': moveForward = false; break;
+        case 'KeyS': moveBackward = false; break;
+        case 'KeyA': moveLeft = false; break;
+        case 'KeyD': moveRight = false; break;
+      }
+    });
 
-                <!-- Start World Button -->
-                <a-plane class="clickable" onclick="startGame()" width="2.8" height="0.4" color="#2e7d32" position="0 -1.0 0.01">
-                    <a-text value="START WORLD / ENTER VR" align="center" position="0 0 0.01" scale="0.8 0.8 0.8" color="#FFFFFF"></a-text>
-                </a-plane>
-            </a-plane>
-        </a-entity>
+    // 3. Lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+    scene.add(ambientLight);
 
-        <!-- World Block Container -->
-        <a-entity id="world"></a-entity>
+    const sun = new THREE.DirectionalLight(0xfff5e6, 0.9);
+    sun.position.set(20, 40, 20);
+    sun.castShadow = true;
+    scene.add(sun);
 
-    </a-scene>
+    // 4. Materials & Geometry
+    const boxGeo = new THREE.BoxGeometry(1, 1, 1);
+    const grassMat = new THREE.MeshStandardMaterial({ color: 0x55a042, roughness: 0.8 });
+    const dirtMat  = new THREE.MeshStandardMaterial({ color: 0x795548, roughness: 0.9 });
+    const woodMat  = new THREE.MeshStandardMaterial({ color: 0x5c4033, roughness: 0.7 });
+    const leafMat  = new THREE.MeshStandardMaterial({ color: 0x2d6a4f, roughness: 0.6 });
 
-    <script>
-        // --- Game State & Variables ---
-        let currentMode = 'creative';
-        let activeMods = {
-            speed: false,
-            night: false
-        };
+    // Helper function to add blocks to scene and tracking array
+    function addBlock(x, y, z, material) {
+      const block = new THREE.Mesh(boxGeo, material);
+      block.position.set(x, y, z);
+      block.castShadow = true;
+      block.receiveShadow = true;
+      scene.add(block);
+      blocks.push(block);
+    }
 
-        const scene = document.querySelector('a-scene');
-        const world = document.getElementById('world');
-        const rig = document.getElementById('rig');
-        const menuUI = document.getElementById('menu-ui');
+    // 5. Generate Terrain
+    const worldSize = 30;
+    for (let x = -worldSize / 2; x < worldSize / 2; x++) {
+      for (let z = -worldSize / 2; z < worldSize / 2; z++) {
+        let height = Math.floor(Math.sin(x * 0.15) * 2 + Math.cos(z * 0.15) * 2);
 
-        // Block Materials / Colors
-        const blockColors = {
-            grass: "#55a042",
-            dirt: "#8b5a2b",
-            stone: "#808080"
-        };
+        addBlock(x, height, z, grassMat);
+        addBlock(x, height - 1, z, dirtMat);
 
-        // --- Game Mode Switcher ---
-        function setGameMode(mode) {
-            currentMode = mode;
-            document.getElementById('current-mode-label').setAttribute('value', 'Current Mode: ' + mode.toUpperCase());
-
-            if (mode === 'spectator') {
-                rig.setAttribute('wasd-controls', 'fly: true; acceleration: 40');
-            } else {
-                rig.setAttribute('wasd-controls', 'fly: false; acceleration: 20');
-            }
+        if (Math.random() < 0.02 && height >= 0) {
+          createTree(x, height + 1, z);
         }
+      }
+    }
 
-        // --- Mod / Addon Toggle Logic ---
-        function toggleMod(modKey) {
-            activeMods[modKey] = !activeMods[modKey];
-
-            if (modKey === 'speed') {
-                const btnText = document.getElementById('mod-speed-text');
-                btnText.setAttribute('value', (activeMods.speed ? '[ON] ' : '[OFF] ') + 'Speed Mod: Super Movement Speed');
-                
-                if (activeMods.speed) {
-                    rig.setAttribute('wasd-controls', 'acceleration: 80');
-                } else {
-                    rig.setAttribute('wasd-controls', 'acceleration: 20');
-                }
-            }
-
-            if (modKey === 'night') {
-                const btnText = document.getElementById('mod-night-text');
-                btnText.setAttribute('value', (activeMods.night ? '[ON] ' : '[OFF] ') + 'World Mod: Always Night / Spooky Sky');
-
-                if (activeMods.night) {
-                    scene.setAttribute('background', 'color: #050515');
-                } else {
-                    scene.setAttribute('background', 'color: #87CEEB');
-                }
-            }
+    function createTree(x, y, z) {
+      for (let i = 0; i < 3; i++) {
+        addBlock(x, y + i, z, woodMat);
+      }
+      for (let lx = -1; lx <= 1; lx++) {
+        for (let ly = 2; ly <= 3; ly++) {
+          for (let lz = -1; lz <= 1; lz++) {
+            addBlock(x + lx, y + ly, z + lz, leafMat);
+          }
         }
+      }
+    }
 
-        // --- World Generation ---
-        function generateWorld() {
-            world.innerHTML = ''; // Clear previous blocks
-            const chunkSize = 10;
+    camera.position.set(0, 5, 0);
 
-            for (let x = -chunkSize; x <= chunkSize; x++) {
-                for (let z = -chunkSize; z <= chunkSize; z++) {
-                    // Bedrock / Stone layer
-                    createBlock(x, 0, z, blockColors.stone);
+    // 6. Block Breaking & Placing System
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2(0, 0); // Center of screen
 
-                    // Dirt layer
-                    createBlock(x, 1, z, blockColors.dirt);
+    // Disable right-click context menu in game
+    document.addEventListener('contextmenu', e => e.preventDefault());
 
-                    // Top Grass layer
-                    createBlock(x, 2, z, blockColors.grass);
-                }
-            }
+    document.addEventListener('mousedown', (event) => {
+      if (!controls.isLocked) return;
+
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(blocks);
+
+      if (intersects.length > 0) {
+        const hitBlock = intersects[0].object;
+
+        // Left Click: Break Block
+        if (event.button === 0) {
+          scene.remove(hitBlock);
+          const index = blocks.indexOf(hitBlock);
+          if (index > -1) blocks.splice(index, 1);
         }
-
-        function createBlock(x, y, z, color) {
-            const block = document.createElement('a-entity');
-            block.setAttribute('mixin', 'block-geo');
-            block.setAttribute('material', 'color', color);
-            block.setAttribute('position', `${x} ${y} ${z}`);
-            block.setAttribute('class', 'voxel');
-
-            // Interaction Event listeners for Breaking / Placing
-            block.addEventListener('click', function (evt) {
-                if (currentMode === 'spectator') return; // Spectator cannot break or place
-
-                // Right click or VR trigger secondary action -> Place Block
-                if (evt.detail.cursorEl && currentMode === 'creative') {
-                    // Left Click / Trigger = Break Block
-                    world.removeChild(block);
-                }
-            });
-
-            world.appendChild(block);
+        // Right Click: Place Block
+        else if (event.button === 2) {
+          const normal = intersects[0].face.normal;
+          const newPos = hitBlock.position.clone().add(normal);
+          addBlock(newPos.x, newPos.y, newPos.z, grassMat);
         }
+      }
+    });
 
-        // --- Start World Action ---
-        function startGame() {
-            // Hide Title Menu UI
-            menuUI.setAttribute('visible', 'false');
+    // 7. Game Loop
+    function animate() {
+      requestAnimationFrame(animate);
 
-            // Set WASD Controls active
-            rig.setAttribute('wasd-controls', 'acceleration: ' + (activeMods.speed ? '80' : '20'));
+      const time = performance.now();
+      if (controls.isLocked) {
+        const delta = (time - prevTime) / 1000;
 
-            // Generate Terrain
-            generateWorld();
+        velocity.x -= velocity.x * 10.0 * delta;
+        velocity.z -= velocity.z * 10.0 * delta;
+        velocity.y -= 30.0 * delta;
 
-            // Teleport Player inside world base
-            rig.setAttribute('position', '0 3.6 0');
+        direction.z = Number(moveForward) - Number(moveBackward);
+        direction.x = Number(moveRight) - Number(moveLeft);
+        direction.normalize();
+
+        if (moveForward || moveBackward) velocity.z -= direction.z * 40.0 * delta;
+        if (moveLeft || moveRight) velocity.x -= direction.x * 40.0 * delta;
+
+        controls.moveRight(-velocity.x * delta);
+        controls.moveForward(-velocity.z * delta);
+
+        controls.getObject().position.y += (velocity.y * delta);
+        if (controls.getObject().position.y < 3) {
+          velocity.y = 0;
+          controls.getObject().position.y = 3;
+          canJump = true;
         }
+      }
 
-        // Enable Right-Click block placement for Desktop testing
-        window.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-            if (currentMode === 'spectator') return;
+      prevTime = time;
+      renderer.render(scene, camera);
+    }
 
-            const cursor = document.getElementById('cursor');
-            const raycaster = cursor.components.raycaster;
-            if (!raycaster) return;
+    animate();
 
-            const intersection = raycaster.getIntersection();
-            if (intersection && intersection.object && intersection.object.el.classList.contains('voxel')) {
-                const hitEl = intersection.object.el;
-                const hitPos = hitEl.getAttribute('position');
-                const normal = intersection.face.normal;
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
 
-                // Create block offset by face normal
-                createBlock(
-                    hitPos.x + normal.x,
-                    hitPos.y + normal.y,
-                    hitPos.z + normal.z,
-                    blockColors.dirt
-                );
-            }
-        });
-    </script>
 </body>
 </html>
+cdnjs.cloudflare.com
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { margin: 0; overflow: hidden; font-family: sans-serif; }
+    #crosshair {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      color: white; font-size: 24px; font-weight: bold;
+      pointer-events: none; text-shadow: 1px 1px 2px black;
+    }
+    #hud {
+      position: absolute; top: 20px; left: 20px;
+      color: white; font-size: 20px; font-weight: bold;
+      text-shadow: 2px 2px 4px #000; pointer-events: none;
+    }
+    #instructions {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      color: white; background: rgba(0,0,0,0.85);
+      padding: 20px 30px; border-radius: 10px; text-align: center;
+      cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/PointerLockControls.js"></script>
+</head>
+<body>
+
+  <div id="crosshair">+</div>
+  <div id="hud">Health: <span id="health">100</span> HP</div>
+  <div id="instructions">
+    <h2>3D Block World</h2>
+    <p>Click to Play</p>
+    <p>Move: <b>W, A, S, D</b> | Jump: <b>SPACE</b><br>
+    Break Block: <b>Left Click</b> | Place Block: <b>Right Click</b></p>
+  </div>
+
+  <script>
+    // 1. Scene & Setup
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x87ceeb);
+    scene.fog = new THREE.FogExp2(0x87ceeb, 0.015);
+
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    document.body.appendChild(renderer.domElement);
+
+    const blocks = [];
+    let playerHealth = 100;
+    let highestY = 0; // Track falling height
+
+    // 2. Controls
+    const controls = new THREE.PointerLockControls(camera, document.body);
+    const instructions = document.getElementById('instructions');
+
+    instructions.addEventListener('click', () => controls.lock());
+    controls.addEventListener('lock', () => instructions.style.display = 'none');
+    controls.addEventListener('unlock', () => instructions.style.display = 'block');
+    scene.add(controls.getObject());
+
+    let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false, canJump = false;
+    const velocity = new THREE.Vector3();
+    const direction = new THREE.Vector3();
+    let prevTime = performance.now();
+
+    document.addEventListener('keydown', (e) => {
+      switch (e.code) {
+        case 'KeyW': moveForward = true; break;
+        case 'KeyS': moveBackward = true; break;
+        case 'KeyA': moveLeft = true; break;
+        case 'KeyD': moveRight = true; break;
+        case 'Space': if (canJump) velocity.y += 12; canJump = false; break;
+      }
+    });
+
+    document.addEventListener('keyup', (e) => {
+      switch (e.code) {
+        case 'KeyW': moveForward = false; break;
+        case 'KeyS': moveBackward = false; break;
+        case 'KeyA': moveLeft = false; break;
+        case 'KeyD': moveRight = false; break;
+      }
+    });
+
+    // 3. Lights
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
+
+    const sun = new THREE.DirectionalLight(0xfff5e6, 0.8);
+    sun.position.set(30, 60, 30);
+    sun.castShadow = true;
+    scene.add(sun);
+
+    // 4. Materials
+    const boxGeo = new THREE.BoxGeometry(1, 1, 1);
+    const grassMat = new THREE.MeshStandardMaterial({ color: 0x4caf50, roughness: 0.8 });
+    const dirtMat  = new THREE.MeshStandardMaterial({ color: 0x795548, roughness: 0.9 });
+    const woodMat  = new THREE.MeshStandardMaterial({ color: 0x5c4033, roughness: 0.7 });
+    const leafMat  = new THREE.MeshStandardMaterial({ color: 0x2d6a4f, roughness: 0.6 });
+
+    function addBlock(x, y, z, material) {
+      const block = new THREE.Mesh(boxGeo, material);
+      block.position.set(x, y, z);
+      block.castShadow = true;
+      block.receiveShadow = true;
+      scene.add(block);
+      blocks.push(block);
+    }
+
+    // 5. Larger World Generation (60x60 grid)
+    const worldSize = 60;
+    for (let x = -worldSize / 2; x < worldSize / 2; x++) {
+      for (let z = -worldSize / 2; z < worldSize / 2; z++) {
+        let height = Math.floor(Math.sin(x * 0.1) * 3 + Math.cos(z * 0.1) * 3);
+
+        addBlock(x, height, z, grassMat);
+        addBlock(x, height - 1, z, dirtMat);
+
+        if (Math.random() < 0.015 && height >= 0) {
+          createTree(x, height + 1, z);
+        }
+      }
+    }
+
+    function createTree(x, y, z) {
+      for (let i = 0; i < 4; i++) addBlock(x, y + i, z, woodMat);
+      for (let lx = -1; lx <= 1; lx++) {
+        for (let ly = 3; ly <= 4; ly++) {
+          for (let lz = -1; lz <= 1; lz++) {
+            addBlock(x + lx, y + ly, z + lz, leafMat);
+          }
+        }
+      }
+    }
+
+    camera.position.set(0, 10, 0);
+
+    // 6. Block Interacting System
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2(0, 0);
+    document.addEventListener('contextmenu', e => e.preventDefault());
+
+    document.addEventListener('mousedown', (e) => {
+      if (!controls.isLocked) return;
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(blocks);
+
+      if (intersects.length > 0) {
+        const hitBlock = intersects[0].object;
+
+        if (e.button === 0) { // Left Click Break
+          scene.remove(hitBlock);
+          const index = blocks.indexOf(hitBlock);
+          if (index > -1) blocks.splice(index, 1);
+        } else if (e.button === 2) { // Right Click Place
+          const normal = intersects[0].face.normal;
+          const newPos = hitBlock.position.clone().add(normal);
+          addBlock(newPos.x, newPos.y, newPos.z, grassMat);
+        }
+      }
+    });
+
+    // 7. Game Loop with Fall Damage & Physics
+    function animate() {
+      requestAnimationFrame(animate);
+
+      const time = performance.now();
+      if (controls.isLocked) {
+        const delta = (time - prevTime) / 1000;
+
+        velocity.x -= velocity.x * 10.0 * delta;
+        velocity.z -= velocity.z * 10.0 * delta;
+        velocity.y -= 30.0 * delta; // Gravity
+
+        direction.z = Number(moveForward) - Number(moveBackward);
+        direction.x = Number(moveRight) - Number(moveLeft);
+        direction.normalize();
+
+        if (moveForward || moveBackward) velocity.z -= direction.z * 40.0 * delta;
+        if (moveLeft || moveRight) velocity.x -= direction.x * 40.0 * delta;
+
+        controls.moveRight(-velocity.x * delta);
+        controls.moveForward(-velocity.z * delta);
+
+        const playerPos = controls.getObject().position;
+
+        // Track highest point during a jump/fall
+        if (playerPos.y > highestY) {
+          highestY = playerPos.y;
+        }
+
+        // Raycast down to land on blocks
+        const downRay = new THREE.Raycaster(playerPos, new THREE.Vector3(0, -1, 0), 0, 1.6);
+        const hits = downRay.intersectObjects(blocks);
+
+        if (hits.length > 0) {
+          // Calculate fall damage
+          let fallDistance = highestY - playerPos.y;
+          if (fallDistance > 4) { // Only take damage if fall distance > 4 blocks
+            playerHealth -= Math.floor((fallDistance - 4) * 10);
+            if (playerHealth < 0) playerHealth = 0;
+            document.getElementById('health').innerText = playerHealth;
+          }
+
+          velocity.y = Math.max(0, velocity.y);
+          canJump = true;
+          highestY = playerPos.y; // Reset highest point
+        }
+
+        playerPos.y += (velocity.y * delta);
+      }
+
+      prevTime = time;
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+
+</body>
+</html><!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { margin: 0; overflow: hidden; font-family: sans-serif; }
+    #crosshair {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      color: white; font-size: 24px; font-weight: bold;
+      pointer-events: none; text-shadow: 1px 1px 2px black;
+    }
+    #hud {
+      position: absolute; top: 20px; left: 20px;
+      color: white; font-size: 20px; font-weight: bold;
+      text-shadow: 2px 2px 4px #000; pointer-events: none;
+    }
+    #instructions {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      color: white; background: rgba(0,0,0,0.85);
+      padding: 20px 30px; border-radius: 10px; text-align: center;
+      cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/PointerLockControls.js"></script>
+</head>
+<body>
+
+  <div id="crosshair">+</div>
+  <div id="hud">Health: <span id="health">100</span> HP</div>
+  <div id="instructions">
+    <h2>3D Block World</h2>
+    <p>Click to Play</p>
+    <p>Move: <b>W, A, S, D</b> | Jump: <b>SPACE</b><br>
+    Break Block: <b>Left Click</b> | Place Block: <b>Right Click</b></p>
+  </div>
+
+  <script>
+    // 1. Scene & Setup
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x87ceeb);
+    scene.fog = new THREE.FogExp2(0x87ceeb, 0.015);
+
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    document.body.appendChild(renderer.domElement);
+
+    const blocks = [];
+    let playerHealth = 100;
+    let highestY = 0; // Track falling height
+
+    // 2. Controls
+    const controls = new THREE.PointerLockControls(camera, document.body);
+    const instructions = document.getElementById('instructions');
+
+    instructions.addEventListener('click', () => controls.lock());
+    controls.addEventListener('lock', () => instructions.style.display = 'none');
+    controls.addEventListener('unlock', () => instructions.style.display = 'block');
+    scene.add(controls.getObject());
+
+    let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false, canJump = false;
+    const velocity = new THREE.Vector3();
+    const direction = new THREE.Vector3();
+    let prevTime = performance.now();
+
+    document.addEventListener('keydown', (e) => {
+      switch (e.code) {
+        case 'KeyW': moveForward = true; break;
+        case 'KeyS': moveBackward = true; break;
+        case 'KeyA': moveLeft = true; break;
+        case 'KeyD': moveRight = true; break;
+        case 'Space': if (canJump) velocity.y += 12; canJump = false; break;
+      }
+    });
+
+    document.addEventListener('keyup', (e) => {
+      switch (e.code) {
+        case 'KeyW': moveForward = false; break;
+        case 'KeyS': moveBackward = false; break;
+        case 'KeyA': moveLeft = false; break;
+        case 'KeyD': moveRight = false; break;
+      }
+    });
+
+    // 3. Lights
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
+
+    const sun = new THREE.DirectionalLight(0xfff5e6, 0.8);
+    sun.position.set(30, 60, 30);
+    sun.castShadow = true;
+    scene.add(sun);
+
+    // 4. Materials
+    const boxGeo = new THREE.BoxGeometry(1, 1, 1);
+    const grassMat = new THREE.MeshStandardMaterial({ color: 0x4caf50, roughness: 0.8 });
+    const dirtMat  = new THREE.MeshStandardMaterial({ color: 0x795548, roughness: 0.9 });
+    const woodMat  = new THREE.MeshStandardMaterial({ color: 0x5c4033, roughness: 0.7 });
+    const leafMat  = new THREE.MeshStandardMaterial({ color: 0x2d6a4f, roughness: 0.6 });
+
+    function addBlock(x, y, z, material) {
+      const block = new THREE.Mesh(boxGeo, material);
+      block.position.set(x, y, z);
+      block.castShadow = true;
+      block.receiveShadow = true;
+      scene.add(block);
+      blocks.push(block);
+    }
+
+    // 5. Larger World Generation (60x60 grid)
+    const worldSize = 60;
+    for (let x = -worldSize / 2; x < worldSize / 2; x++) {
+      for (let z = -worldSize / 2; z < worldSize / 2; z++) {
+        let height = Math.floor(Math.sin(x * 0.1) * 3 + Math.cos(z * 0.1) * 3);
+
+        addBlock(x, height, z, grassMat);
+        addBlock(x, height - 1, z, dirtMat);
+
+        if (Math.random() < 0.015 && height >= 0) {
+          createTree(x, height + 1, z);
+        }
+      }
+    }
+
+    function createTree(x, y, z) {
+      for (let i = 0; i < 4; i++) addBlock(x, y + i, z, woodMat);
+      for (let lx = -1; lx <= 1; lx++) {
+        for (let ly = 3; ly <= 4; ly++) {
+          for (let lz = -1; lz <= 1; lz++) {
+            addBlock(x + lx, y + ly, z + lz, leafMat);
+          }
+        }
+      }
+    }
+
+    camera.position.set(0, 10, 0);
+
+    // 6. Block Interacting System
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2(0, 0);
+    document.addEventListener('contextmenu', e => e.preventDefault());
+
+    document.addEventListener('mousedown', (e) => {
+      if (!controls.isLocked) return;
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(blocks);
+
+      if (intersects.length > 0) {
+        const hitBlock = intersects[0].object;
+
+        if (e.button === 0) { // Left Click Break
+          scene.remove(hitBlock);
+          const index = blocks.indexOf(hitBlock);
+          if (index > -1) blocks.splice(index, 1);
+        } else if (e.button === 2) { // Right Click Place
+          const normal = intersects[0].face.normal;
+          const newPos = hitBlock.position.clone().add(normal);
+          addBlock(newPos.x, newPos.y, newPos.z, grassMat);
+        }
+      }
+    });
+
+    // 7. Game Loop with Fall Damage & Physics
+    function animate() {
+      requestAnimationFrame(animate);
+
+      const time = performance.now();
+      if (controls.isLocked) {
+        const delta = (time - prevTime) / 1000;
+
+        velocity.x -= velocity.x * 10.0 * delta;
+        velocity.z -= velocity.z * 10.0 * delta;
+        velocity.y -= 30.0 * delta; // Gravity
+
+        direction.z = Number(moveForward) - Number(moveBackward);
+        direction.x = Number(moveRight) - Number(moveLeft);
+        direction.normalize();
+
+        if (moveForward || moveBackward) velocity.z -= direction.z * 40.0 * delta;
+        if (moveLeft || moveRight) velocity.x -= direction.x * 40.0 * delta;
+
+        controls.moveRight(-velocity.x * delta);
+        controls.moveForward(-velocity.z * delta);
+
+        const playerPos = controls.getObject().position;
+
+        // Track highest point during a jump/fall
+        if (playerPos.y > highestY) {
+          highestY = playerPos.y;
+        }
+
+        // Raycast down to land on blocks
+        const downRay = new THREE.Raycaster(playerPos, new THREE.Vector3(0, -1, 0), 0, 1.6);
+        const hits = downRay.intersectObjects(blocks);
+
+        if (hits.length > 0) {
+          // Calculate fall damage
+          let fallDistance = highestY - playerPos.y;
+          if (fallDistance > 4) { // Only take damage if fall distance > 4 blocks
+            playerHealth -= Math.floor((fallDistance - 4) * 10);
+            if (playerHealth < 0) playerHealth = 0;
+            document.getElementById('health').innerText = playerHealth;
+          }
+
+          velocity.y = Math.max(0, velocity.y);
+          canJump = true;
+          highestY = playerPos.y; // Reset highest point
+        }
+
+        playerPos.y += (velocity.y * delta);
+      }
+
+      prevTime = time;
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+
+</body>
+</html>\
+cdnjs.cloudflare.com
+Compose
+Write to Zhino Muhammad
